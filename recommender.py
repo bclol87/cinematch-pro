@@ -59,10 +59,11 @@ def make_stars(score):
     return "⭐" * count + f" ({score:.1f})"
 
 # The main recommendation algorithm
-def get_recommendations(search_query, min_rating, selected_genres, start_year, end_year, movies, cosine_sim):
+def get_recommendations(search_query, search_type, min_rating, selected_genres, start_year, end_year, movies, cosine_sim):
     if movies.empty:
         return pd.DataFrame(), {}
 
+    # 1. Apply basic UI filters first
     candidate_pool = movies[
         (movies['vote_average'] >= min_rating) &
         (movies['year'] >= start_year) &
@@ -75,22 +76,25 @@ def get_recommendations(search_query, min_rating, selected_genres, start_year, e
 
     results = pd.DataFrame()
 
+    # 2. If search box is empty, just show trending/popular movies
     if not search_query:
         results = candidate_pool.sort_values('vote_average', ascending=False).head(20).copy()
         results['Why Shown?'] = "🔥 Top Rated"
+        
     else:
-        # 1. Search for the exact keyword (Actor or Genre)
-        mask = candidate_pool['content_features'].str.lower().str.contains(search_query.lower())
-        keyword_matches = candidate_pool[mask].copy()
+        # 3. IF THEY SEARCHED FOR AN ACTOR:
+        if search_type == "Actor Name":
+            # Search strictly inside the 'credits' column
+            mask = candidate_pool['credits'].str.lower().str.contains(search_query.lower())
+            actor_matches = candidate_pool[mask].copy()
 
-        if not keyword_matches.empty:
-            # FIX: Sort by popularity (vote_count) first so famous actor movies appear at the top!
-            # Then filter by your minimum rating slider.
-            results = keyword_matches.sort_values('vote_count', ascending=False).head(20)
-            results['Why Shown?'] = f"Found match: '{search_query}'"
-            
-        else:
-            # 2. If no keyword matches, assume it's a Movie Title and use AI Similarity
+            if not actor_matches.empty:
+                # Sort by popularity so their biggest hits show up first!
+                results = actor_matches.sort_values('vote_count', ascending=False).head(20)
+                results['Why Shown?'] = f"Starring: {search_query.title()}"
+                
+        # 4. IF THEY SEARCHED FOR A MOVIE:
+        elif search_type == "Movie Title":
             all_titles = candidate_pool['title'].astype(str).tolist()
             matches = difflib.get_close_matches(search_query, all_titles, n=1, cutoff=0.4)
 
@@ -98,12 +102,14 @@ def get_recommendations(search_query, min_rating, selected_genres, start_year, e
                 exact_title = matches[0]
                 idx = movies[movies['title'] == exact_title].index[0]
 
+                # Run the AI similarity math
                 sim_scores = list(enumerate(cosine_sim[idx]))
                 sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:21]
 
                 movie_indices = [i[0] for i in sim_scores]
                 recs = movies.iloc[movie_indices].copy()
 
+                # Re-apply the filters to the AI results
                 recs = recs[
                     (recs['vote_average'] >= min_rating) &
                     (recs['year'] >= start_year) &
@@ -119,11 +125,12 @@ def get_recommendations(search_query, min_rating, selected_genres, start_year, e
     if results.empty:
         return pd.DataFrame(), {}
 
+    # 5. Calculate Genre stats for the UI graph
     all_res_genres = results['genres'].str.split(', ').explode().dropna()
     all_res_genres = all_res_genres[all_res_genres != '']
-
+    
     genre_counts = {}
     if not all_res_genres.empty:
         genre_counts = all_res_genres.value_counts().head(5)
-
+        
     return results, genre_counts
