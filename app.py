@@ -104,9 +104,20 @@ st.subheader("Discover your next favorite movie in seconds.")
 
 # --- SEARCH BAR AREA ---
 with st.container():
+    st.markdown("### 🔍 Search Engine")
+    
+    # 1. THE MISSING VARIABLE: This creates 'search_type' so it doesn't throw a NameError!
+    search_type = st.radio("What are you looking for?", ["Movie Title", "Actor Name"], horizontal=True, label_visibility="collapsed")
+    
     col1, col2 = st.columns([4, 1])
-    search_query = col1.text_input("Search Engine", placeholder="Type an Actor (e.g. Robert Downey Jr) or Movie Title...", label_visibility="collapsed")
-    search_btn = col2.button("🔍 Find Movies", use_container_width=True, type="primary")
+    
+    if search_type == "Actor Name":
+        hint = "Type an Actor (e.g., Robert Downey Jr, Tom Holland)..."
+    else:
+        hint = "Type a Movie Title (e.g., Inception, Spirited Away)..."
+        
+    search_query = col1.text_input("Search Input", placeholder=hint, label_visibility="collapsed")
+    search_btn = col2.button("Find Movies", use_container_width=True, type="primary")
 
 # --- RESULTS TABS ---
 tab1, tab2 = st.tabs(["🍿 Recommendations", "📊 Genre Insights"])
@@ -114,7 +125,7 @@ tab1, tab2 = st.tabs(["🍿 Recommendations", "📊 Genre Insights"])
 # --- EXECUTE LOGIC ---
 if search_btn or search_query or not search_query: 
     results, genre_counts = get_recommendations(
-        search_query, min_rating, selected_genres, 
+        search_query, search_type, min_rating, selected_genres, 
         year_range[0], year_range[1], movies, cosine_sim
     )
 
