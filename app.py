@@ -12,9 +12,33 @@ st.set_page_config(
 # --- CUSTOM STYLING ---
 st.markdown("""
     <style>
+    /* Main background */
     .main { background-color: #0e1117; }
-    .stMetric { background-color: #1e2130; padding: 15px; border-radius: 10px; border: 1px solid #3e425b; }
-    .movie-card { border-radius: 10px; padding: 20px; margin-bottom: 10px; background-color: #161b22; }
+    
+    /* FIX: Force white text in Metric Cards */
+    [data-testid="stMetricValue"] {
+        color: #ffffff !important;
+        font-weight: bold;
+    }
+    [data-testid="stMetricLabel"] {
+        color: #a1a1a1 !important;
+    }
+    
+    /* Background for the metric boxes */
+    div[data-testid="metric-container"] {
+        background-color: #1e2130;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #3e425b;
+    }
+    
+    /* Movie card styling */
+    .movie-card { 
+        border-radius: 10px; 
+        padding: 20px; 
+        margin-bottom: 10px; 
+        background-color: #161b22; 
+    }
     </style>
     """, unsafe_allow_html=True)
 
