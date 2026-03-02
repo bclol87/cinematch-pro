@@ -4,24 +4,21 @@ import difflib
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 
-# Cache the data so it only loads once
 @st.cache_data
 def load_data():
     try:
-        # Loading your uploaded CSV directly
-        df = pd.read_csv('movies_lite.csv', on_bad_lines='skip', engine='python')
-        
+        df = pd.read_csv('movies_lite.csv')
         df['vote_average'] = pd.to_numeric(df['vote_average'], errors='coerce').fillna(0)
         df['vote_count'] = pd.to_numeric(df['vote_count'], errors='coerce').fillna(0)
         df['id'] = pd.to_numeric(df['id'], errors='coerce').fillna(0).astype(int)
-        
         df['release_date'] = pd.to_datetime(df['release_date'], errors='coerce')
         df['year'] = df['release_date'].dt.year.fillna(0).astype(int)
 
         # Lite Mode: Keep Top 5000
         df = df.sort_values('vote_count', ascending=False).head(5000).copy()
 
-        text_cols = ['genres', 'overview', 'title', 'credits']
+        # Removed the 'credits' column since it doesn't exist in your dataset
+        text_cols = ['genres', 'overview', 'title']
         for col in text_cols:
             if col not in df.columns: df[col] = ''
             else: df[col] = df[col].fillna('')
@@ -29,7 +26,6 @@ def load_data():
         df['content_features'] = (
             (df['title'] + " ") * 2 + 
             (df['genres'] + " ") * 1 + 
-            (df['credits'] + " ") * 2 + 
             df['overview']
         )
         return df.reset_index(drop=True)
@@ -37,7 +33,6 @@ def load_data():
         st.error(f"Error loading data: {e}")
         return pd.DataFrame()
 
-# Cache the AI model
 @st.cache_resource
 def train_model(data):
     if data.empty: return None
@@ -49,7 +44,6 @@ def make_stars(score):
     count = int(round(score))
     return "⭐" * count + f" ({score:.1f})"
 
-# The main recommendation algorithm
 def get_recommendations(search_query, min_rating, selected_genres, start_year, end_year, movies, cosine_sim):
     if movies.empty:
         return pd.DataFrame(), {}
@@ -70,37 +64,39 @@ def get_recommendations(search_query, min_rating, selected_genres, start_year, e
         results = candidate_pool.sort_values('vote_average', ascending=False).head(20).copy()
         results['Why Shown?'] = "🔥 Top Rated"
     else:
-        mask = candidate_pool['content_features'].str.lower().str.contains(search_query.lower())
-        keyword_matches = candidate_pool[mask].sort_values('vote_average', ascending=False).copy()
+        # Step 1: Try to find the exact movie title
+        all_titles = candidate_pool['title'].astype(str).tolist()
+        matches = difflib.get_close_matches(search_query, all_titles, n=1, cutoff=0.5)
 
-        if not keyword_matches.empty:
-            results = keyword_matches.head(20)
-            results['Why Shown?'] = f"Found match: '{search_query}'"
+        if matches:
+            exact_title = matches[0]
+            idx = movies[movies['title'] == exact_title].index[0]
+            
+            sim_scores = list(enumerate(cosine_sim[idx]))
+            sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:21]
+            
+            movie_indices = [i[0] for i in sim_scores]
+            recs = movies.iloc[movie_indices].copy()
+            
+            recs = recs[
+                (recs['vote_average'] >= min_rating) &
+                (recs['year'] >= start_year) &
+                (recs['year'] <= end_year)
+            ]
+            
+            if selected_genres:
+                recs = recs[recs['genres'].str.contains(pattern, case=False, na=False)]
+            
+            results = recs.head(20)
+            results['Why Shown?'] = f"Similar to: {exact_title}"
         else:
-            all_titles = candidate_pool['title'].astype(str).tolist()
-            matches = difflib.get_close_matches(search_query, all_titles, n=1, cutoff=0.4)
+            # Step 2: If no movie matches, do a keyword search (sorted by popularity)
+            mask = candidate_pool['content_features'].str.lower().str.contains(search_query.lower())
+            keyword_matches = candidate_pool[mask].copy()
 
-            if matches:
-                exact_title = matches[0]
-                idx = movies[movies['title'] == exact_title].index[0]
-                
-                sim_scores = list(enumerate(cosine_sim[idx]))
-                sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:21]
-                
-                movie_indices = [i[0] for i in sim_scores]
-                recs = movies.iloc[movie_indices].copy()
-                
-                recs = recs[
-                    (recs['vote_average'] >= min_rating) &
-                    (recs['year'] >= start_year) &
-                    (recs['year'] <= end_year)
-                ]
-                
-                if selected_genres:
-                    recs = recs[recs['genres'].str.contains(pattern, case=False, na=False)]
-                
-                results = recs.head(20)
-                results['Why Shown?'] = f"Similar to: {exact_title}"
+            if not keyword_matches.empty:
+                results = keyword_matches.sort_values('vote_count', ascending=False).head(20)
+                results['Why Shown?'] = f"Keyword Match: '{search_query}'"
 
     if results.empty:
         return pd.DataFrame(), {}
