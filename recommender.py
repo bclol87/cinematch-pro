@@ -9,7 +9,7 @@ from sklearn.metrics.pairwise import linear_kernel
 def load_data():
     try:
         # Loading your uploaded CSV directly
-        df = pd.read_csv('TMDB_movie_dataset_v11.csv', on_bad_lines='skip', engine='python')
+        df = pd.read_csv('movies_lite.csv', on_bad_lines='skip', engine='python')
         
         df['vote_average'] = pd.to_numeric(df['vote_average'], errors='coerce').fillna(0)
         df['vote_count'] = pd.to_numeric(df['vote_count'], errors='coerce').fillna(0)
