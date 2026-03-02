@@ -79,13 +79,18 @@ def get_recommendations(search_query, min_rating, selected_genres, start_year, e
         results = candidate_pool.sort_values('vote_average', ascending=False).head(20).copy()
         results['Why Shown?'] = "🔥 Top Rated"
     else:
+        # 1. Search for the exact keyword (Actor or Genre)
         mask = candidate_pool['content_features'].str.lower().str.contains(search_query.lower())
-        keyword_matches = candidate_pool[mask].sort_values('vote_average', ascending=False).copy()
+        keyword_matches = candidate_pool[mask].copy()
 
         if not keyword_matches.empty:
-            results = keyword_matches.head(20)
+            # FIX: Sort by popularity (vote_count) first so famous actor movies appear at the top!
+            # Then filter by your minimum rating slider.
+            results = keyword_matches.sort_values('vote_count', ascending=False).head(20)
             results['Why Shown?'] = f"Found match: '{search_query}'"
+            
         else:
+            # 2. If no keyword matches, assume it's a Movie Title and use AI Similarity
             all_titles = candidate_pool['title'].astype(str).tolist()
             matches = difflib.get_close_matches(search_query, all_titles, n=1, cutoff=0.4)
 
