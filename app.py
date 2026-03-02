@@ -12,38 +12,44 @@ st.set_page_config(
 # --- CUSTOM STYLING ---
 st.markdown("""
     <style>
-    /* Main app background */
-    .stApp { background-color: #0e1117; }
+    /* Main app background - keeping it slightly off-white for contrast */
+    .stApp { background-color: #f8f9fa; }
 
     /* Target the Metric Containers */
     [data-testid="stMetric"] {
-        background-color: #1e2130 !important;
+        background-color: #ffffff !important;
         padding: 20px !important;
-        border-radius: 15px !important;
-        border: 1px solid #3e425b !important;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        border-radius: 12px !important;
+        border: 1px solid #e0e0e0 !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
     }
 
-    /* Force the Big Number to be White */
+    /* Force the Big Number to be BLACK */
     [data-testid="stMetricValue"] > div {
-        color: #ffffff !important;
-        font-size: 2rem !important;
-        font-weight: 700 !important;
+        color: #000000 !important;
+        font-size: 2.2rem !important;
+        font-weight: 800 !important;
     }
 
-    /* Force the Label (e.g., "Movies Found") to be Light Gray */
+    /* Force the Label (e.g., "Movies Found") to be Dark Gray/Blue */
     [data-testid="stMetricLabel"] > div > p {
-        color: #00d4ff !important; /* Bright blue for labels */
+        color: #555555 !important;
         font-weight: 600 !important;
         text-transform: uppercase;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
     }
 
-    /* Styling for movie cards below */
+    /* Adjust the Search Bar and Button colors for the light theme */
+    .stTextInput input {
+        color: #000000 !important;
+    }
+    
+    /* Movie card styling for light mode */
     .stAlert {
-        background-color: #161b22 !important;
-        border: 1px solid #30363d !important;
-        color: #ffffff !important;
+        background-color: #ffffff !important;
+        border: 1px solid #e0e0e0 !important;
+        color: #000000 !important;
     }
     </style>
     """, unsafe_allow_html=True)
