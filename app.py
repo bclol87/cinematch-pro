@@ -12,32 +12,38 @@ st.set_page_config(
 # --- CUSTOM STYLING ---
 st.markdown("""
     <style>
-    /* Main background */
-    .main { background-color: #0e1117; }
-    
-    /* FIX: Force white text in Metric Cards */
-    [data-testid="stMetricValue"] {
+    /* Main app background */
+    .stApp { background-color: #0e1117; }
+
+    /* Target the Metric Containers */
+    [data-testid="stMetric"] {
+        background-color: #1e2130 !important;
+        padding: 20px !important;
+        border-radius: 15px !important;
+        border: 1px solid #3e425b !important;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Force the Big Number to be White */
+    [data-testid="stMetricValue"] > div {
         color: #ffffff !important;
-        font-weight: bold;
+        font-size: 2rem !important;
+        font-weight: 700 !important;
     }
-    [data-testid="stMetricLabel"] {
-        color: #a1a1a1 !important;
+
+    /* Force the Label (e.g., "Movies Found") to be Light Gray */
+    [data-testid="stMetricLabel"] > div > p {
+        color: #00d4ff !important; /* Bright blue for labels */
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        font-size: 0.8rem;
     }
-    
-    /* Background for the metric boxes */
-    div[data-testid="metric-container"] {
-        background-color: #1e2130;
-        padding: 15px;
-        border-radius: 10px;
-        border: 1px solid #3e425b;
-    }
-    
-    /* Movie card styling */
-    .movie-card { 
-        border-radius: 10px; 
-        padding: 20px; 
-        margin-bottom: 10px; 
-        background-color: #161b22; 
+
+    /* Styling for movie cards below */
+    .stAlert {
+        background-color: #161b22 !important;
+        border: 1px solid #30363d !important;
+        color: #ffffff !important;
     }
     </style>
     """, unsafe_allow_html=True)
