@@ -46,8 +46,7 @@ with st.sidebar:
     year_range = st.slider("Release Period", min_year_data, max_year_data, (2000, max_year_data))
     selected_genres = st.multiselect("Filter by Genres", all_genres, placeholder="Choose genres...")
     
-    st.markdown("---")
-    st.caption("AI-Powered by TF-IDF Content Similarity")
+    
 
 # --- MAIN HERO SECTION ---
 st.title("🎬 CineMatch Pro")
