@@ -12,45 +12,9 @@ st.set_page_config(
 # --- CUSTOM STYLING ---
 st.markdown("""
     <style>
-    /* Main app background - keeping it slightly off-white for contrast */
-    .stApp { background-color: #f8f9fa; }
-
-    /* Target the Metric Containers */
-    [data-testid="stMetric"] {
-        background-color: #ffffff !important;
-        padding: 20px !important;
-        border-radius: 12px !important;
-        border: 1px solid #e0e0e0 !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
-    }
-
-    /* Force the Big Number to be BLACK */
-    [data-testid="stMetricValue"] > div {
-        color: #000000 !important;
-        font-size: 2.2rem !important;
-        font-weight: 800 !important;
-    }
-
-    /* Force the Label (e.g., "Movies Found") to be Dark Gray/Blue */
-    [data-testid="stMetricLabel"] > div > p {
-        color: #555555 !important;
-        font-weight: 600 !important;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        letter-spacing: 0.5px;
-    }
-
-    /* Adjust the Search Bar and Button colors for the light theme */
-    .stTextInput input {
-        color: #000000 !important;
-    }
-    
-    /* Movie card styling for light mode */
-    .stAlert {
-        background-color: #ffffff !important;
-        border: 1px solid #e0e0e0 !important;
-        color: #000000 !important;
-    }
+    .main { background-color: #0e1117; }
+    .stMetric { background-color: #1e2130; padding: 15px; border-radius: 10px; border: 1px solid #3e425b; }
+    .movie-card { border-radius: 10px; padding: 20px; margin-bottom: 10px; background-color: #161b22; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -88,31 +52,20 @@ st.subheader("Discover your next favorite movie in seconds.")
 
 # --- SEARCH BAR AREA ---
 with st.container():
-    st.markdown("### 🔍 Search Engine")
-    
-    # THE TOGGLE BUTTON
-    search_type = st.radio("What are you looking for?", ["Movie Title", "Actor Name"], horizontal=True, label_visibility="collapsed")
-    
     col1, col2 = st.columns([4, 1])
-    
-    if search_type == "Actor Name":
-        hint = "Type an Actor (e.g., Tom Holland, Zendaya)..."
-    else:
-        hint = "Type a Movie Title (e.g., Spider-Man, Inception)..."
-        
-    search_query = col1.text_input("Search Input", placeholder=hint, label_visibility="collapsed")
-    search_btn = col2.button("Find Movies", use_container_width=True, type="primary")
+    search_query = col1.text_input("Search Engine", placeholder="Type Movie Title...", label_visibility="collapsed")
+    search_btn = col2.button("🔍 Find Movies", use_container_width=True, type="primary")
 
 # --- RESULTS TABS ---
 tab1, tab2 = st.tabs(["🍿 Recommendations", "📊 Genre Insights"])
 
 # --- EXECUTE LOGIC ---
 if search_btn or search_query or not search_query: 
-    # Notice we pass 'search_type' to the function now!
     results, genre_counts = get_recommendations(
-        search_query, search_type, min_rating, selected_genres, 
+        search_query, min_rating, selected_genres, 
         year_range[0], year_range[1], movies, cosine_sim
     )
+
     with tab1:
         if results.empty:
             st.warning("No matches found. Try lowering the rating or broadening the year range.")
