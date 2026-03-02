@@ -88,20 +88,31 @@ st.subheader("Discover your next favorite movie in seconds.")
 
 # --- SEARCH BAR AREA ---
 with st.container():
+    st.markdown("### 🔍 Search Engine")
+    
+    # THE TOGGLE BUTTON
+    search_type = st.radio("What are you looking for?", ["Movie Title", "Actor Name"], horizontal=True, label_visibility="collapsed")
+    
     col1, col2 = st.columns([4, 1])
-    search_query = col1.text_input("Search Engine", placeholder="Type an Actor (e.g. Robert Downey Jr) or Movie Title...", label_visibility="collapsed")
-    search_btn = col2.button("🔍 Find Movies", use_container_width=True, type="primary")
+    
+    if search_type == "Actor Name":
+        hint = "Type an Actor (e.g., Tom Holland, Zendaya)..."
+    else:
+        hint = "Type a Movie Title (e.g., Spider-Man, Inception)..."
+        
+    search_query = col1.text_input("Search Input", placeholder=hint, label_visibility="collapsed")
+    search_btn = col2.button("Find Movies", use_container_width=True, type="primary")
 
 # --- RESULTS TABS ---
 tab1, tab2 = st.tabs(["🍿 Recommendations", "📊 Genre Insights"])
 
 # --- EXECUTE LOGIC ---
 if search_btn or search_query or not search_query: 
+    # Notice we pass 'search_type' to the function now!
     results, genre_counts = get_recommendations(
-        search_query, min_rating, selected_genres, 
+        search_query, search_type, min_rating, selected_genres, 
         year_range[0], year_range[1], movies, cosine_sim
     )
-
     with tab1:
         if results.empty:
             st.warning("No matches found. Try lowering the rating or broadening the year range.")
