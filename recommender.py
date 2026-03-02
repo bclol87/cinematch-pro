@@ -71,7 +71,7 @@ def get_recommendations(search_query, min_rating, selected_genres, start_year, e
         results['Why Shown?'] = "🔥 Top Rated"
     else:
         mask = candidate_pool['content_features'].str.lower().str.contains(search_query.lower())
-        keyword_matches = candidate_pool[mask].sort_values('vote_average', ascending=False).copy()
+        keyword_matches = candidate_pool[mask].sort_values('vote_count', ascending=False).copy()
 
         if not keyword_matches.empty:
             results = keyword_matches.head(20)
