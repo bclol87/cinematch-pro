@@ -9,7 +9,7 @@ from sklearn.metrics.pairwise import linear_kernel
 def load_data():
     try:
         # Loading your uploaded CSV directly
-        df = pd.read_csv('movies_lite.csv', on_bad_lines='skip', engine='python')
+        df = pd.read_csv('TMDB_movie_dataset_v11.csv', on_bad_lines='skip', engine='python')
         
         df['vote_average'] = pd.to_numeric(df['vote_average'], errors='coerce').fillna(0)
         df['vote_count'] = pd.to_numeric(df['vote_count'], errors='coerce').fillna(0)
@@ -50,7 +50,7 @@ def make_stars(score):
     return "⭐" * count + f" ({score:.1f})"
 
 # The main recommendation algorithm
-def get_recommendations(search_query, search_type, min_rating, selected_genres, start_year, end_year, movies, cosine_sim):
+def get_recommendations(search_query, min_rating, selected_genres, start_year, end_year, movies, cosine_sim):
     if movies.empty:
         return pd.DataFrame(), {}
         
@@ -70,20 +70,14 @@ def get_recommendations(search_query, search_type, min_rating, selected_genres, 
         results = candidate_pool.sort_values('vote_average', ascending=False).head(20).copy()
         results['Why Shown?'] = "🔥 Top Rated"
     else:
-        # --- ACTOR SEARCH LOGIC ---
-        if search_type == "Actor Name":
-            # Search ONLY in credits, and sort by popularity so big Marvel movies are #1
-            mask = candidate_pool['credits'].str.lower().str.contains(search_query.lower())
-            keyword_matches = candidate_pool[mask].copy()
+        mask = candidate_pool['content_features'].str.lower().str.contains(search_query.lower())
+        keyword_matches = candidate_pool[mask].sort_values('vote_average', ascending=False).copy()
 
-            if not keyword_matches.empty:
-                results = keyword_matches.sort_values('vote_count', ascending=False).head(20)
-                results['Why Shown?'] = f"Starring: {search_query.title()}"
-
-        # --- MOVIE SEARCH LOGIC ---
-        elif search_type == "Movie Title":
+        if not keyword_matches.empty:
+            results = keyword_matches.head(20)
+            results['Why Shown?'] = f"Found match: '{search_query}'"
+        else:
             all_titles = candidate_pool['title'].astype(str).tolist()
-            # Use the spellchecker ONLY for movie titles
             matches = difflib.get_close_matches(search_query, all_titles, n=1, cutoff=0.4)
 
             if matches:
@@ -96,7 +90,6 @@ def get_recommendations(search_query, search_type, min_rating, selected_genres, 
                 movie_indices = [i[0] for i in sim_scores]
                 recs = movies.iloc[movie_indices].copy()
                 
-                # Apply UI filters to the AI results
                 recs = recs[
                     (recs['vote_average'] >= min_rating) &
                     (recs['year'] >= start_year) &
@@ -113,13 +106,6 @@ def get_recommendations(search_query, search_type, min_rating, selected_genres, 
         return pd.DataFrame(), {}
 
     all_res_genres = results['genres'].str.split(', ').explode().dropna()
-    all_res_genres = all_res_genres[all_res_genres != '']
-    
-    genre_counts = {}
-    if not all_res_genres.empty:
-        genre_counts = all_res_genres.value_counts().head(5)
-        
-    return results, genre_counts
     all_res_genres = all_res_genres[all_res_genres != '']
     
     genre_counts = {}
